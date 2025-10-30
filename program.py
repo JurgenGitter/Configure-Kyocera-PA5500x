@@ -6,11 +6,11 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver import ActionChains
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
-import keyring, time, ipaddress, os, sys, csv
+import keyring, time, ipaddress, os, sys
+
 
 ############################Global Vars############################
 retries = 3
-
 
 ############################FUNCTIONS##############################
 
@@ -19,72 +19,44 @@ def resource_path(rel_path):
         base = sys._MEIPASS
     else:
         base = os.path.dirname(os.path.abspath(__file__))
-    path = os.path.join(base, rel_path)
-    if not os.path.exists(path):
-        path = os.path.join(os.path.dirname(sys.executable), rel_path)
-    return path
+    return os.path.join(base, rel_path)
 
 
-def open_csv_file():
-    csv_file = resource_path("printers.csv")
-    name_list = []
+def get_ips():
     ip_list = []
+    names_list = []
 
-    with open(csv_file, newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            hostname = row["hostname"]
-            ip = row["ip"]
-            name_list.append(hostname)
-            ip_list.append(ip)
-            print(hostname, ip)
+    while True:
+        try:
+            num_ips = int(input("How many Printers?:"))
+            if num_ips < 1:
+                raise ValueError
+            else:
+                break
+        except ValueError:
+            print("Please enter a valid number")
 
-    return ip_list, name_list
+    for x in range(1, num_ips + 1):
+        while True:
+            try:
+                ip_add = input(f"Please enter IP address #{x}: ")
 
+                if isinstance(ipaddress.ip_address(ip_add), ipaddress.IPv4Address):
+                    ip_list.append(ip_add)
+                    break
+                else:
+                    raise ValueError
 
-#def get_ips():
-#    ip_list = []
-#    names_list = []
-#
-#    while True:
-#        try:
-#            num_ips = int(input("How many Printers?:"))
-#            if num_ips < 1:
-#                raise ValueError
-#            else:
-#                break
-#        except ValueError:
-#            print("Please enter a valid number")
-#
-#    for x in range(1, num_ips + 1):
-#        while True:
-#            try:
-#                ip_add = input(f"Please enter IP address #{x}: ")
-#
-#                if isinstance(ipaddress.ip_address(ip_add), ipaddress.IPv4Address):
-#                    ip_list.append(ip_add)
-#                    break
-#                else:
-#                    raise ValueError
-#
-#           except ValueError:
-#                print("Please enter a valid IP address")
-#
-#        host_names = input(f"Please enter Hostname #{x}: ")
-#        names_list.append(host_names)
-#
-#    return ip_list, names_list
+            except ValueError:
+                print("Please enter a valid IP address")
 
+        host_names = input(f"Please enter Hostname #{x}: ")
+        names_list.append(host_names)
 
-#def find_model():
-    #model = driver.find_element(By.CSS_SELECTOR, '[data-bind="text:getHeaderInfo(1)"]')
-    #modelo = model.text
-    #print(modelo)
-
+    return ip_list, names_list
 
 def login_printer():
     printer_user = keyring.get_password("PrinterUser", "User")
-    printer_pass = keyring.get_password("PrinterPass", "Pass")
 
     for i in range(retries):
         try:
@@ -101,7 +73,7 @@ def login_printer():
             driver.switch_to.frame("printingjobs")
             grab_sn = driver.find_element(By.CSS_SELECTOR, '[data-bind="text: serialNumber"]')
             sn = grab_sn.text
-            # print(sn)
+            #print(sn)
             grab_mac = driver.find_element(By.CSS_SELECTOR, '[data-bind="text: macAddress"]')
             mac = grab_mac.text
 
@@ -115,8 +87,7 @@ def login_printer():
 
             login_password = driver.find_element(By.CSS_SELECTOR, '[id="arg02_Password"]')
             login_password.click()
-            #login_password.send_keys(sn)
-            login_password.send_keys(printer_pass)
+            login_password.send_keys(sn)
 
             time.sleep(3)
             login_submit = driver.find_element(By.CSS_SELECTOR, '[data-bind="value: mes()[20]"]')
@@ -164,7 +135,6 @@ def energy_printer():
             i = i + 1
             print(f"Failed attempt #{i} at configuring energy settings")
 
-
 def time_printer():
     for i in range(retries):
         try:
@@ -178,14 +148,14 @@ def time_printer():
             select = Select(device_settings_date_time)
             select.select_by_value("timez_ctl_time")
 
-            #device_settings_daylight = driver.find_element(By.CSS_SELECTOR, '[name="arg09_SummerTime"]')
-            #ActionChains(driver) \
-                #.scroll_to_element(device_settings_daylight) \
-                #.move_to_element(device_settings_daylight) \
-                #.pause(.5) \
-                #.click(device_settings_daylight) \
-                #.pause(.5) \
-                #.perform()
+            device_settings_daylight = driver.find_element(By.CSS_SELECTOR, '[name="arg09_SummerTime"]')
+            ActionChains(driver) \
+                .scroll_to_element(device_settings_daylight) \
+                .move_to_element(device_settings_daylight) \
+                .pause(.5)\
+                .click(device_settings_daylight) \
+                .pause(.5)\
+                .perform()
 
             device_settings_time_server = driver.find_element(By.CSS_SELECTOR, '[id="arg10_TimeServer"]')
             driver.execute_script("arguments[0].scrollIntoView(true);", device_settings_time_server)
@@ -200,14 +170,13 @@ def time_printer():
                 alert.accept()
             except:
                 pass
-
+                
             print("[+] Set Date and Time settings")
             return True
 
         except:
             i = i + 1
             print(f"Failed attempt #{i} at configuring time and date")
-
 
 def snmp_printer():
     snmp_read = keyring.get_password("PrinterSNMPRead", "SNMP")
@@ -233,15 +202,15 @@ def snmp_printer():
                 .perform()
 
             driver.switch_to.frame("printingjobs")
-            # snmp_read_com = driver.find_element(By.CSS_SELECTOR, '[id="arg01_ReadCommunity"]')
-            # snmp_read_com.click()
-            # snmp_read_com.clear()
-            # snmp_read_com.send_keys(snmp_read)
+            #snmp_read_com = driver.find_element(By.CSS_SELECTOR, '[id="arg01_ReadCommunity"]')
+            #snmp_read_com.click()
+            #snmp_read_com.clear()
+            #snmp_read_com.send_keys(snmp_read)
 
-            # snmp_write_com = driver.find_element(By.CSS_SELECTOR, '[id="arg02_WriteCommunity"]')
-            # snmp_write_com.click()
-            # snmp_write_com.clear()
-            # snmp_write_com.send_keys(snmp_write)
+            #snmp_write_com = driver.find_element(By.CSS_SELECTOR, '[id="arg02_WriteCommunity"]')
+            #snmp_write_com.click()
+            #snmp_write_com.clear()
+            #snmp_write_com.send_keys(snmp_write)
 
             hp_web_jetadmin = driver.find_element(By.CSS_SELECTOR, '[id="arg05_HpWeb"]')
             ActionChains(driver) \
@@ -266,7 +235,6 @@ def snmp_printer():
             i = i + 1
             print(f"Failed attempt #{i} at configuring SNMP")
 
-
 def admin_printer():
     printer_pass = keyring.get_password("PrinterPass", "Pass")
     time.sleep(3)
@@ -279,11 +247,10 @@ def admin_printer():
             management_settings_auth.click()
             time.sleep(5)
 
-            # click Admin user ISSUES HERE.
-            # No one can be logged into printer page as Admin or it will freeze
+    #click Admin user ISSUES HERE.
+    #No one can be logged into printer page as Admin or it will freeze
             driver.switch_to.frame("funsetrule")
-            management_settings_admin = WebDriverWait(driver, 13).until(EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, 'a[data-bind="attr: { href: $parent.col1col2Attr().href }"]')))
+            management_settings_admin = WebDriverWait(driver, 13).until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[data-bind="attr: { href: $parent.col1col2Attr().href }"]')))
             ActionChains(driver) \
                 .scroll_to_element(management_settings_admin) \
                 .click(management_settings_admin) \
@@ -317,7 +284,6 @@ def admin_printer():
         except:
             i = i + 1
             print(f"Failed attempt #{i} at setting admin pass")
-
 
 def hostname_printer(lis, i):
     for x in range(retries):
@@ -353,11 +319,12 @@ def hostname_printer(lis, i):
             print(f"Failed attempt #{x} at setting hostname")
 
 
+
 def restart_printer():
     time.sleep(10)
 
     for i in range(retries):
-        # fails here due to printer quick restart that occurs after hostname change. This is why refresh and switch to frame is needed
+    # fails here due to printer quick restart that occurs after hostname change. This is why refresh and switch to frame is needed
         try:
             driver.refresh()
 
@@ -393,25 +360,19 @@ def restart_printer():
             i = i + 1
             print(f"Failed attempt #{i} at restarting printer")
 
-
 def config_printer(list_ip, list_name):
+
     for i in range(len(list_ip)):
         ip = 'http://' + list_ip[i] + '/'
         print(ip)
 
-        print("Accessing printer page")
         try:
+            print("Accessing printer page")
             driver.get(ip)
         except:
-            print(f"Selenium failed to reach {ip}. Skipping...")
-            print()
-            continue
-
-        #try:
-            #find_model()
-        #except:
-            #print(f"Unable to find model of  + {list_ip[i]}")
-            #raise
+            er1 = "Error: Unable to connect to " + list_ip[i]
+            print(er1)
+            raise
 
         try:
             mac = login_printer()
@@ -463,7 +424,7 @@ def config_printer(list_ip, list_name):
             raise
 
         w = "Done with " + list_name[i]
-        t = list_name[i] + " - " + list_ip[i] + " - " + mac
+        t = "I have a new kyocera printer that could use a reservation. It has an IP of " + list_ip[i] + " with a hostname of " + list_name[i] + " and a MAC of " + mac
         print(w)
         print(t)
         print()
@@ -475,38 +436,24 @@ def config_printer(list_ip, list_name):
 ##############################MAIN#################################
 driver_path = resource_path("chromedriver.exe")
 
-print(
-    '          _____                             _____   __                                                                                    ')
-print(
-    '         / ____|    ____      _________    |  ___| |__|   _______     __    __    _____     ____                                          ')
-print(
-    '        | |       /      \   |   ___   |  _|  |_    __   /   __   \  |  |  |  |  |   __|  /  |*|  \                                       ')
-print(
-    '        | |      |   / \   | |  |   |  | |_   __|  |  |  |  |  |  |  |  |  |  |  |  |    |   _____|                                       ')
-print(
-    '        | |_____ |   \_/   | |  |   |  |   |  |    |  |  |  |__|  |  |  |__|  |  |  |     \  \_____                                       ')
-print(
-    '         \______| \_______/  |__|   |__|   |__|    |__|  |____    |   \______/   |__|       \_____/                                       ')
-print(
-    '                                                        ___   |   |                                                                       ')
-print(
-    '                                                        \  \_/   /                                                                        ')
-print(
-    '                                                          \ __ /                                                                          ')
-print(
-    '          _____              __                   __                                                                                      ')
-print(
-    '         |      \   _____   |__|  _________      |  |        ____      _____                                                              ')
-print(
-    '         |    __/  |   __|   __  |   ___   |  ___|  |___   /  |*|  \  |   __|                                                             ')
-print(
-    '         |  |      |  |     |  | |  |   |  | |___    ___| |   _____|  |  |                                                                ')
-print(
-    '         |  |      |  |     |  | |  |   |  |     |  |      \  \_____  |  |                                                                ')
-print(
-    '         |__|      |__|     |__| |__|   |__|     |__|        \_____/  |__|                                                                ')
-print(
-    '                                                                                                                                          ')
+
+
+print('          _____                             _____   __                                                                                    ')
+print('         / ____|    ____      _________    |  ___| |__|   _______     __    __    _____     ____                                          ')
+print('        | |       /      \   |   ___   |  _|  |_    __   /   __   \  |  |  |  |  |   __|  /  |*|  \                                       ')
+print('        | |      |   / \   | |  |   |  | |_   __|  |  |  |  |  |  |  |  |  |  |  |  |    |   _____|                                       ')
+print('        | |_____ |   \_/   | |  |   |  |   |  |    |  |  |  |__|  |  |  |__|  |  |  |     \  \_____                                       ')
+print('         \______| \_______/  |__|   |__|   |__|    |__|  |____    |   \______/   |__|       \_____/                                       ')
+print('                                                        ___   |   |                                                                       ')
+print('                                                        \  \_/   /                                                                        ')
+print('                                                          \ __ /                                                                          ')
+print('          _____              __                   __                                                                                      ')
+print('         |      \   _____   |__|  _________      |  |        ____      _____                                                              ')
+print('         |    __/  |   __|   __  |   ___   |  ___|  |___   /  |*|  \  |   __|                                                             ')
+print('         |  |      |  |     |  | |  |   |  | |___    ___| |   _____|  |  |                                                                ')
+print('         |  |      |  |     |  | |  |   |  |     |  |      \  \_____  |  |                                                                ')
+print('         |__|      |__|     |__| |__|   |__|     |__|        \_____/  |__|                                                                ')
+print('                                                                                                                                          ')
 print(' ______________________________ ')
 print('|                              |')
 print('|       Kyocera PA5500x        |')
@@ -530,8 +477,7 @@ while True:
     print()
     print()
     if switch == "1":
-        #list_o_ip, list_o_names = get_ips()
-        list_o_ip, list_o_names = open_csv_file()
+        list_o_ip, list_o_names = get_ips()
 
         options = Options()
         options.add_experimental_option("excludeSwitches", ["enable-logging"])
