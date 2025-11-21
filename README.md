@@ -2,12 +2,13 @@ This is a python script that configures **Kyocera PA5500x printers** over the ne
 
 Packaged using PyInstaller CMD run: pyinstaller --onefile --add-binary "C:..\chromedriver.exe;." --add-data "chrome-win64;chrome-win64" C:..\script.py 
 
+```
 Packaged directory format: 
 Parent Folder - 
     |_Chrome-Win64 
     |_Chromedriver.exe 
     |_Script.py
-
+```
 Chromedriver version: 139.xx Chrome-Win64 version: 139.xx
 
 
