@@ -98,7 +98,7 @@ def login_printer():
 
         except:
             i = str(i + 1)
-            print("Failed attempt #" + i + " at logging in")
+            print("[-] Failed attempt #" + i + " at logging in")
 
 
 def energy_printer():
@@ -133,7 +133,7 @@ def energy_printer():
 
         except:
             i = i + 1
-            print(f"Failed attempt #{i} at configuring energy settings")
+            print(f"[-] Failed attempt #{i} at configuring energy settings")
 
 def time_printer():
     for i in range(retries):
@@ -176,7 +176,7 @@ def time_printer():
 
         except:
             i = i + 1
-            print(f"Failed attempt #{i} at configuring time and date")
+            print(f"[-] Failed attempt #{i} at configuring time and date")
 
 def snmp_printer():
     snmp_read = keyring.get_password("PrinterSNMPRead", "SNMP")
@@ -233,7 +233,7 @@ def snmp_printer():
 
         except:
             i = i + 1
-            print(f"Failed attempt #{i} at configuring SNMP")
+            print(f"[-] Failed attempt #{i} at configuring SNMP")
 
 def admin_printer():
     printer_pass = keyring.get_password("PrinterPass", "Pass")
@@ -283,7 +283,7 @@ def admin_printer():
 
         except:
             i = i + 1
-            print(f"Failed attempt #{i} at setting admin pass")
+            print(f"[-] Failed attempt #{i} at setting admin pass")
 
 def hostname_printer(lis, i):
     for x in range(retries):
@@ -316,7 +316,7 @@ def hostname_printer(lis, i):
 
         except:
             x = x + 1
-            print(f"Failed attempt #{x} at setting hostname")
+            print(f"[-] Failed attempt #{x} at setting hostname")
 
 
 
