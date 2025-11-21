@@ -97,8 +97,8 @@ def login_printer():
             return mac
 
         except:
-            i = str(i + 1)
-            print("[-] Failed attempt #" + i + " at logging in")
+            i = i + 1
+            print(f"[-] Failed attempt #{i} at logging in")
 
 
 def energy_printer():
@@ -423,10 +423,9 @@ def config_printer(list_ip, list_name):
             print(er8)
             raise
 
-        w = "Done with " + list_name[i]
-        t = "I have a new kyocera printer that could use a reservation. It has an IP of " + list_ip[i] + " with a hostname of " + list_name[i] + " and a MAC of " + mac
-        print(w)
-        print(t)
+        print(f"Done with {list_name[i]}")
+        print(f"I have a new Kyocera printer that could use a reservation.")
+        print(f"{list_name[i]} - {list_ip[i]} - {mac}")
         print()
         print()
         # time.sleep(30) remove later, used for debugging
